@@ -1889,7 +1889,11 @@ ngx_http_flv_live_preprocess(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-    ngx_http_arg(r, arg_app.data, arg_app.len, &ctx->app);
+    if (ngx_http_arg(r, arg_app.data, arg_app.len, &ctx->app) != NGX_OK)
+    {
+        ctx->app.data = (u_char *) "";
+        ctx->app.len = 0;
+    }
 
     if (ngx_http_arg(r, arg_stream.data, arg_stream.len,
                      &ctx->stream) != NGX_OK)
