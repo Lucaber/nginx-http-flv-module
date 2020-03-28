@@ -238,6 +238,12 @@ static ngx_command_t ngx_http_flv_live_commands[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_flv_live_conf_t, flv_live),
       NULL },
+    { ngx_string("flv_app"),
+      NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_flv_live_conf_t, flv_app),
+      NULL },
 
     ngx_null_command
 };
@@ -986,9 +992,21 @@ ngx_http_flv_live_request(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_int_t                    rc;
     ngx_http_request_t          *r;
     ngx_http_flv_live_ctx_t     *ctx;
+    ngx_http_flv_live_conf_t    *hfcf;
 
     r = s->data;
     ctx = ngx_http_get_module_ctx(r, ngx_http_flv_live_module);
+
+    hfcf = ngx_http_get_module_loc_conf(r, ngx_http_flv_live_module);
+    if (ctx->app.len == 0) {
+        ctx->app = hfcf->flv_app;
+        if (ctx->app.len == 0) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                      "flv live: app args MUST be specified if default is not set");
+
+            return NGX_ERROR;
+        }
+    }
 
     rc = ngx_http_flv_live_connect_init(s, &ctx->app, &ctx->stream);
     if (rc != NGX_OK) {
@@ -1871,12 +1889,7 @@ ngx_http_flv_live_preprocess(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-    if (ngx_http_arg(r, arg_app.data, arg_app.len, &ctx->app) != NGX_OK) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "flv live: app args MUST be specified");
-
-        return NGX_ERROR;
-    }
+    ngx_http_arg(r, arg_app.data, arg_app.len, &ctx->app);
 
     if (ngx_http_arg(r, arg_stream.data, arg_stream.len,
                      &ctx->stream) != NGX_OK)

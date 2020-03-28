@@ -44,6 +44,7 @@ typedef struct ngx_http_flv_live_ctx_s {
 
 typedef struct ngx_http_flv_live_conf_s {
     ngx_flag_t    flv_live;
+    ngx_str_t     flv_app;
 } ngx_http_flv_live_conf_t;
 
 
